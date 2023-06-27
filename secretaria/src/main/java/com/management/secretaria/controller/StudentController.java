@@ -7,6 +7,10 @@ import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -46,8 +50,9 @@ public class StudentController {
     }
 
     @GetMapping
-    public ResponseEntity<List<StudentModel>> getAllStudents() {
-        return ResponseEntity.status(HttpStatus.OK).body(studentService.findAll());
+    public ResponseEntity<Page<StudentModel>> getAllStudents(@PageableDefault(page = 0, size = 10, sort = "studentId", direction = Sort.Direction.ASC) Pageable pageable) {
+        Page<StudentModel> studentModelPage = studentService.findAll(pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(studentModelPage);
     }
 
     @GetMapping("/{studentId}")
