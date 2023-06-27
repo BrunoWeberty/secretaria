@@ -6,6 +6,7 @@ import com.management.secretaria.services.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -50,7 +51,7 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
-    public Page<StudentModel> findAll(Pageable pageable) {
-        return studentRepository.findAll(pageable);
+    public Page<StudentModel> findAll(Specification<StudentModel> spec, Pageable pageable) {
+        return studentRepository.findAll(spec, pageable);
     }
 }

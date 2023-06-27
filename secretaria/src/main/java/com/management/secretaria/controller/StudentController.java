@@ -3,6 +3,7 @@ package com.management.secretaria.controller;
 import com.management.secretaria.dto.StudentDto;
 import com.management.secretaria.model.StudentModel;
 import com.management.secretaria.services.StudentService;
+import com.management.secretaria.specifications.SpecificationTemplate;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.BeanUtils;
@@ -49,19 +50,19 @@ public class StudentController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<StudentModel>> getAllStudents(@PageableDefault(page = 0, size = 10, sort = "studentId", direction = Sort.Direction.ASC) Pageable pageable) {
-        Page<StudentModel> studentModelPage = studentService.findAll(pageable);
+    public ResponseEntity<Page<StudentModel>> getAllStudents(SpecificationTemplate.StudentSpec spec,
+                                                             @PageableDefault(page = 0, size = 10, sort = "studentId", direction = Sort.Direction.ASC) Pageable pageable) {
+        Page<StudentModel> studentModelPage = studentService.findAll(spec, pageable);
         return ResponseEntity.status(HttpStatus.OK).body(studentModelPage);
     }
 
     @GetMapping("/{studentId}")
     public ResponseEntity<Object> getOneStudent(@PathVariable(value = "studentId") UUID studentId) {
         var optionalStudent = studentService.findById(studentId);
-        if (optionalStudent.isPresent()) {
-            return ResponseEntity.status(HttpStatus.OK).body(optionalStudent.get());
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Student not found");
-        }
+        return optionalStudent
+                .<ResponseEntity<Object>>map(
+                        studentModel -> ResponseEntity.status(HttpStatus.OK).body(studentModel))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("Student not found"));
     }
 
     @DeleteMapping("/{studentId}")
