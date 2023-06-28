@@ -20,6 +20,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.UUID;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 @RestController
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RequestMapping("/students")
@@ -53,16 +56,24 @@ public class StudentController {
     public ResponseEntity<Page<StudentModel>> getAllStudents(SpecificationTemplate.StudentSpec spec,
                                                              @PageableDefault(page = 0, size = 10, sort = "studentId", direction = Sort.Direction.ASC) Pageable pageable) {
         Page<StudentModel> studentModelPage = studentService.findAll(spec, pageable);
+        if (!studentModelPage.isEmpty()) {
+            for (StudentModel student : studentModelPage.toList()) {
+                var id = student.getStudentId();
+                student.add(linkTo(methodOn(StudentController.class).getOneStudent(id)).withSelfRel());
+            }
+        }
         return ResponseEntity.status(HttpStatus.OK).body(studentModelPage);
     }
 
     @GetMapping("/{studentId}")
     public ResponseEntity<Object> getOneStudent(@PathVariable(value = "studentId") UUID studentId) {
         var optionalStudent = studentService.findById(studentId);
-        return optionalStudent
-                .<ResponseEntity<Object>>map(
-                        studentModel -> ResponseEntity.status(HttpStatus.OK).body(studentModel))
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("Student not found"));
+        if (optionalStudent.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Student not found");
+        } else {
+            optionalStudent.get().add(linkTo(methodOn(StudentController.class).getAllStudents(null, null)).withRel("Lista de Estudantes"));
+            return ResponseEntity.status(HttpStatus.OK).body(optionalStudent.get());
+        }
     }
 
     @DeleteMapping("/{studentId}")
